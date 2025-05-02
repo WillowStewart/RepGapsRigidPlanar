@@ -1,0 +1,662 @@
+LoadPackage("semigroups");
+
+#for generating the cell structure
+dotstr := function(M)
+  DotString(M);
+  FileString("[FILEPATH]", DotString(M));
+end;
+#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
+
+###Defining RMo
+
+IsRMotz := function(bipartition)
+  local a,aneg,i,j,n,pair;
+  bipartition := ExtRepOfObj(bipartition);
+  n := Size(bipartition);
+  a := []*n;
+  for i in [1..n] do
+	if i mod 2 <> 0
+	  then a[i] := 1;
+	elif i mod 2 = 0
+	  then a[i] := 2;
+	fi;
+  od;
+  aneg := a;
+  for pair in bipartition do
+	if Size(pair) = 1 then
+	  if pair[1] > 0
+		then i := pair[1];
+		if aneg[i] <> a[i]
+		  then return false;
+		fi;
+	  elif pair[1] < 0
+		then i := -pair[1];
+		if a[i] <> aneg[i]
+		  then return false;
+		fi;
+	  fi;
+	elif pair[1] > 0 and pair[2] > 0 then
+	  i := pair[1];
+	  j := pair[2];
+	  if a[i] <> 1 or a[j] <> 2
+		then return false;
+	  fi;
+	elif pair[1] < 0 and pair[2] < 0 then
+	  i := -pair[1];
+	  j := -pair[2];
+	  if aneg[i] <> 2 or aneg[j] <> 1
+		then return false;
+	  fi;
+	elif pair[1]*pair[2] < 0 then
+	  i := pair[1];
+	  j := -pair[2];
+	  if a[i] <> aneg[j]
+		then return false;
+	  fi;
+	fi;
+  od;
+  return true;
+end;
+
+SizeRMotz := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := MotzkinMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRMotz(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return Size(list);
+end;
+
+AllRMotz := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := MotzkinMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRMotz(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return list;
+end;
+
+#Using a generating set: 
+RMotzGenerated := function(n)
+  local gens,previousgens,gen,next,i,nextall,nextfrm;
+  if n < 0
+	then return "give something positive please";
+  elif n = 0
+	then return Monoid(Bipartition([]));
+  elif n = 1
+	then return Monoid([Bipartition([[1,-1]]),Bipartition([[1],[-1]])]);
+  elif n = 2
+	then return Monoid([
+        Bipartition([[1,-1],[2,-2]]),
+        Bipartition([[1,2],[-1],[-2]]),
+        Bipartition([[1],[2,-2],[-1]]),
+        Bipartition([[1,-1],[2],[-2]])
+        ]);
+  elif n = 3
+	then return Monoid([
+		Bipartition([[1,2],[3,-1],[-2,-3]]),
+		Bipartition([[1,2],[-1],[-2],[3,-3]]),
+		Bipartition([[1],[2,-2],[-1],[3,-3]]),
+		Bipartition([[1,-1],[2],[-2],[3,-3]]),
+		Bipartition([[1,-1],[2,-2],[3],[-3]]),
+		Bipartition([[1,-1],[2],[3],[-2,-3]])
+		]);
+  elif n = 4
+	then return Monoid([
+        Bipartition([[1,2],[3,-1],[4,-4],[-2,-3]]),
+        Bipartition([[1,-1],[2,-4],[3,4],[-2,-3]]),
+        Bipartition([[1,2],[-1],[-2],[3,-3],[4,-4]]),
+        Bipartition([[1],[2,-2],[-1],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2],[-2],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3],[-3],[4,-4]]),
+        Bipartition([[1,-1],[2],[3],[-2,-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3,-3],[4],[-4]]),
+        Bipartition([[1,-1],[2,-2],[3,4],[-3],[-4]])
+        ]);
+  fi;
+  previousgens := Generators(RMotzGenerated(n-1)); 
+  gens := [];
+  for gen in previousgens do
+	gen := ExtRepOfObj(gen);
+	gen := List(gen);
+	Add(gen,[n,-n]);
+	Add(gens,Bipartition(gen));
+  od;
+  nextall := [[n],[-n]];
+  for i in [1..(n-1)] do
+	Add(nextall,[i,-i]);
+  od;
+  Add(gens,Bipartition(nextall));
+  if n mod 2 = 0 then 
+	next := [[n-1,n],[-(n-1)],[-n]];
+	for i in [1..(n-2)] do
+	  Add(next,[i,-i]);
+	od;
+	nextfrm := [[n-2,-n],[n-1,n],[-(n-2),-(n-1)]];
+	for i in [1..(n-3)] do
+	  Add(nextfrm,[i,-i]);
+	od;
+  elif n mod 2 <> 0 then
+	next := [[n-1],[n],[-(n-1),-n]];
+	for i in [1..(n-2)] do
+	  Add(next,[i,-i]);
+	od;
+	nextfrm := [[1,2],[-(n-1),-n]];
+	for i in [1..(n-2)] do
+	  Add(nextfrm,[i+2,-i]);
+	od;
+  fi;
+  Add(gens,Bipartition(next));
+  Add(gens,Bipartition(nextfrm));
+  return Monoid(gens);
+end;
+
+NumStrandsRMotz := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i;
+	elif pair[1]*pair[2] < 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+NumStrandsOddEvenRMotz := function(bipartition)
+  local i,j,pair;
+  i := 0;
+  j := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i;
+		j := j;
+	elif pair[1]*pair[2] < 0 then
+	  if pair[1] mod 2 = 1
+		then i := i + 1;
+	  elif pair[1] mod 2 = 0
+		then j := j + 1;
+	  fi;
+	fi;
+  od;
+  return [i,j];
+end;
+
+NumDotsRMotz := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i+1;
+	fi;
+  od;
+  return i;
+end;
+
+RMotzGeneratedk := function(n,k)
+  local M,elem,list;
+  M := Elements(RMotzGenerated(n));
+  list := [];
+  for elem in M do
+	if NumStrandsRMotz(elem) = k
+	  then Add(list,elem);
+	fi;
+  od;
+  return list;
+end;
+
+###(right) cell sizes
+
+TopHalfDiagramRMotz := function(bipartition)
+  local pair,cupposition,lineposition,topdotposition;
+  cupposition := [];
+  lineposition := [];
+  topdotposition := [];
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotposition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupposition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(lineposition,pair[1]);
+	else break;
+	fi;
+  od;
+  return [cupposition,topdotposition,lineposition];
+end;
+
+IsTopHalfDiagramRMotz := function(bipartition,position)
+  local cupsbipartition,linesbipartition,pair,cupposition,lineposition,matches,i,topdotposition,topdotsbipartition;
+  cupposition := position[1];
+  topdotposition := position[2];
+  lineposition := position[3];
+  bipartition := ExtRepOfObj(bipartition);
+  cupsbipartition := [];
+  topdotsbipartition := [];
+  linesbipartition := [];
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotsbipartition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupsbipartition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(linesbipartition,pair);
+	else break;
+	fi;
+  od;
+  if Size(topdotsbipartition) <> Size(topdotposition)
+	then return false;
+  elif Size(cupsbipartition) <> Size(cupposition)
+	then return false;
+  elif Size(linesbipartition) <> Size(lineposition)
+	then return false;
+  fi;
+  matches := [];
+  for i in [1..Size(cupsbipartition)] do
+	if cupsbipartition[i][1] = cupposition[i][1] and cupsbipartition[i][2] = cupposition[i][2] 
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(topdotsbipartition)] do
+	if topdotsbipartition[i][1] = topdotposition[i][1]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(linesbipartition)] do
+	if linesbipartition[i][1] = lineposition[i]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  return Sum(matches) = Size(matches);
+end;
+
+FindAllTopPositionsRMotz := function(bipartitions)
+  local positions,bipartition;
+  positions := [];
+  for bipartition in bipartitions do
+	AddSet(positions,TopHalfDiagramRMotz(bipartition));
+  od;
+  return positions;
+end;
+
+CNTTopHalfDiagramRMotz := function(bipartitions,position)
+  local i,bipartition,list;
+  i := 0;
+  #list := [];
+  for bipartition in bipartitions do
+	if IsTopHalfDiagramRMotz(bipartition,position) = true
+	  then i := i + 1;
+		#Add(list,bipartition);
+	fi;
+  od;
+  return i;
+end;
+
+CNTTopRepsRMotz := function(bipartitions)
+  local positions,position,sizes;
+  positions := FindAllTopPositionsRMotz(bipartitions);
+  sizes := [];
+  for position in positions do
+	Add(sizes,[position,CNTTopHalfDiagramRMotz(bipartitions,position)]);
+  od;
+  return sizes;
+end;
+
+#size of right cell for each k
+CNTAllTopRepsRMotzkstrands := function(n,k)
+  local bipartitions;
+  bipartitions := RMotzGeneratedk(n,k);
+  return CNTTopRepsRMotz(bipartitions);
+end;
+
+
+###Calculation using sequences and combinatorics
+
+#number of diagrams on bottom object of length m of the form 121212... 
+RMotzBottom := function(m)
+  local a;
+  if m = 0
+	then return 1;
+  elif m < 0 
+	then return 0;
+  fi;
+  a := Int(Floor(Float((m+1)/2)));
+  return Factorial(2*a)/(Factorial(a)*Factorial(a+1));
+end;
+
+#minimal right cell size for each k
+RightRepRMotzMin := function(n,k)
+  local list,listlist,partitions,partition,i,j,a;
+  listlist := [];
+  partitions := OrderedPartitions(n/2+1,k+1);
+  for partition in partitions do
+	list := []*k;
+	j := partition[k+1];
+	a := RMotzBottom(2*j-2);
+	for i in [1..k] do 
+	  list[i] := RMotzBottom(2*partition[i]-1);
+	od;
+	Add(listlist,Product(list)*a);
+  od;
+  return Sum(listlist);
+end;
+
+#right cell size for fixed sequence of through strands
+RightRepRMotzSeq := function(n,k,seq)
+  local even,odd,i,partitions,list,listlist,partition;
+	if k = 0
+	  then return RMotzBottom(n);
+	fi;
+	even := [];
+	odd := [];
+	if seq[1] = 1
+	  then Add(even,1);
+	else
+	  Add(odd,1);
+	fi;
+	if seq[k] = 1
+	  then Add(odd,k+1);
+	else
+	  Add(even,k+1);
+	fi;
+	for i in [2..k] do
+	  if (seq[i-1] = 1 and seq[i] = 1) or (seq[i-1] = 2 and seq[i] = 2)
+		then Add(odd,i);
+	  elif (seq[i-1] = 1 and seq[i] = 2) or (seq[i-1] = 2 and seq[i] = 1)
+		then Add(even,i);
+	  fi;
+	od;
+
+	listlist := [];
+	partitions := OrderedPartitions((n-(k+Size(odd)))/2+k+1,k+1);
+
+	for partition in partitions do
+	  list := []*(k+1);
+	  if 1 in even then
+		if seq[1] = 1
+		  then list[1] := RMotzBottom(2*partition[1]-2);
+		elif seq[1] = 2
+		  then return "something went wrong, seq[1] = 2 but 1st block is even";
+		fi;
+	  elif 1 in odd then 
+	  if seq[1] = 1
+		  then return "something went wrong, seq[1] = 1 but 1st block is odd";
+		elif seq[1] = 2
+		  then list[1] := RMotzBottom(2*partition[1]-1);
+		fi;
+	  fi;
+	  if (k+1) in even then
+		if seq[k] = 1
+		  then return "something went wrong, seq[k] = 1 but last block is even";
+		elif seq[k] = 2
+		  then list[k+1] := RMotzBottom(2*partition[k+1]-2);
+	    fi;
+	  elif (k+1) in odd then
+	    if seq[k] = 1
+		  then list[k+1] := RMotzBottom(2*partition[k+1]-1);
+		elif seq[k] = 2
+		  then return "something went wrong, seq[k] = 2 but last block is odd";
+	    fi;
+	  fi;
+	  for i in [2..k] do
+		if i in even then
+		  if seq[i-1] = 1
+			then list[i] := RMotzBottom(2*partition[i]-1);
+		  elif seq[i-1] = 2
+			then list[i] := RMotzBottom(2*partition[i]-2);
+		  fi;
+		elif i in odd then
+		  if seq[i-1] = 1
+			then list[i] := RMotzBottom(2*partition[i]);
+		  elif seq[i-1] = 2
+			then list[i] := RMotzBottom(2*partition[i]-1);
+		  fi;
+		fi;
+	  od;
+	  Add(listlist,Product(list));
+	od;
+  return Sum(listlist);
+end;
+
+#Same but for left cells now
+RMotzTop := function(m)
+  return RMotzBottom(m+1);
+end;
+
+LeftRepRMotzSeq := function(n,k,seq)
+  local even,odd,i,partitions,list,listlist,partition;
+	if k = 0
+	  then return RMotzTop(n);
+	fi;
+	even := [];
+	odd := [];
+	if seq[1] = 1
+	  then Add(even,1);
+	else
+	  Add(odd,1);
+	fi;
+	if seq[k] = 1
+	  then Add(odd,k+1);
+	else
+	  Add(even,k+1);
+	fi;
+	for i in [2..k] do
+	  if (seq[i-1] = 1 and seq[i] = 1) or (seq[i-1] = 2 and seq[i] = 2)
+		then Add(odd,i);
+	  elif (seq[i-1] = 1 and seq[i] = 2) or (seq[i-1] = 2 and seq[i] = 1)
+		then Add(even,i);
+	  fi;
+	od;
+
+	listlist := [];
+	partitions := OrderedPartitions((n-(k+Size(odd)))/2+k+1,k+1);
+
+	for partition in partitions do
+	  list := []*(k+1);
+	  if 1 in even then
+		if seq[1] = 1
+		  then list[1] := RMotzTop(2*partition[1]-2);
+		elif seq[1] = 2
+		  then return "something went wrong, seq[1] = 2 but 1st block is even";
+		fi;
+	  elif 1 in odd then 
+	  if seq[1] = 1
+		  then return "something went wrong, seq[1] = 1 but 1st block is odd";
+		elif seq[1] = 2
+		  then list[1] := RMotzTop(2*partition[1]-1);
+		fi;
+	  fi;
+	  if (k+1) in even then
+		if seq[k] = 1
+		  then return "something went wrong, seq[k] = 1 but last block is even";
+		elif seq[k] = 2
+		  then list[k+1] := RMotzTop(2*partition[k+1]-2);
+	    fi;
+	  elif (k+1) in odd then
+	    if seq[k] = 1
+		  then list[k+1] := RMotzBottom(2*partition[k+1]-1);
+		elif seq[k] = 2
+		  then return "something went wrong, seq[k] = 2 but last block is odd";
+	    fi;
+	  fi;
+	  for i in [2..k] do
+		if i in even then
+		  if seq[i-1] = 1
+			then list[i] := RMotzBottom(2*partition[i]-2);
+		  elif seq[i-1] = 2
+			then list[i] := RMotzTop(2*partition[i]-2);
+		  fi;
+		elif i in odd then
+		  if seq[i-1] = 1
+			then list[i] := RMotzBottom(2*partition[i]-1);
+		  elif seq[i-1] = 2
+			then list[i] := RMotzTop(2*partition[i]-1);
+		  fi;
+		fi;
+	  od;
+	  Add(listlist,Product(list));
+	od;
+  return Sum(listlist);
+end;
+
+#generate sequences of through strands as subsequences of 12121212... using bit masking
+allSubseq := function(s)
+  local n, mask, i, curr, res;
+
+  n := Size(s);
+  res := [];
+
+  for mask in [0..(2^n)-1] do
+    curr := [];  
+    for i in [1..n] do
+      if (mask mod (2^i)) >= (2^(i-1)) then
+        curr := Concatenation(curr, [s[i]]);
+      fi;
+    od;
+    AddSet(res, curr);
+  od;
+  return res;
+end;
+
+#size of RMo_n computed by a sum of products of the left and right cell sizes over all sequences of through strands
+AllSubsequencesSum := function(n) #only really reasonable up to n=20
+  local obj,list,set,x,i,M;
+  obj := []*n;
+  for i in [1..n] do
+	if i mod 2 = 1
+	  then obj[i] := 1;
+	elif i mod 2 = 0
+	  then obj[i] := 2;
+	fi;
+  od;
+  list := [];
+  M := allSubseq(obj);
+  for x in M do
+	Add(list,RightRepRMotzSeq(n,Size(x),x)*LeftRepRMotzSeq(n,Size(x),x));
+  od;
+  return Sum(list);
+end;
+
+#Alternate method iterating over number of through strands 
+SubsequenceskStrands := function(k)
+  local seqs,seq,i,j,l;
+  seqs := [];
+  l := k+1;
+  seq := []*k;
+  for i in [1..k] do 
+	seq[i] := 2;
+  od;
+  Add(seqs,[seq,l]);
+  for j in [1..Int(Floor(Float(k/2)))] do
+	seq := []*k;
+	for i in [1..k] do
+	  if (i mod 2) <> 0 and i <= 2*j-1+(k mod 2)
+		then seq[i] := 1;
+	  else seq[i] := 2;
+	  fi;
+	od;
+	l := NrCombinations([1..(k+1)],2*j+1);
+	Add(seqs,[seq,l]);
+  od;
+  return seqs;
+end;
+
+AllSubsequencesSumkStrands := function(n,k) #only really reasonable up to n=20
+  local obj,list,set,x,i,M;
+  obj := []*n;
+  for i in [1..n] do
+	if i mod 2 = 1
+	  then obj[i] := 1;
+	elif i mod 2 = 0
+	  then obj[i] := 2;
+	fi;
+  od;
+  list := [];
+  M := SubsequenceskStrands(k);
+  for x in M do
+	Add(list,x[2]*RightRepRMotzSeq(n,Size(x[1]),x[1])*LeftRepRMotzSeq(n,Size(x[1]),x[1]));
+  od;
+  return Sum(list);
+end;
+
+SizeRMotzCalc := function(n)
+  local k,sum;
+  sum := 0;
+  for k in [0..n] do 
+	sum := sum + AllSubsequencesSumkStrands(n,k);
+  od;
+  return sum;
+end;
+
+### Gram matrices to compute simples
+
+gramRMotz := function(n,k)
+  local G,r,l,i,Jclasses,JclasseskStrands,Jclass,j,class,jclass,positions,pos,elem,mat,d,iso,inv,RMS,m,x,row,col,grams;
+  Jclasses := List(DClasses(RMotzGenerated(n)));
+  #need to group Jclasses into number of through strands, and loop over each J class with that number of through strands
+  JclasseskStrands := [];
+  for Jclass in Jclasses do
+	if NumStrandsRMotz(Elements(Jclass)[1]) = k
+	  then Add(JclasseskStrands,Jclass);
+	fi;
+  od;
+
+  grams := [];
+  for Jclass in JclasseskStrands do
+  d := Jclass;
+  iso := InjectionNormalizedPrincipalFactor(d);
+  inv := InverseGeneralMapping(iso);
+  RMS := Range(iso);
+  mat := Matrix(RMS);
+  G := UnderlyingSemigroup(RMS);
+  r := Size(Columns(RMS));
+  l := Size(Rows(RMS));
+  m := NullMat(r,l);
+  for col in Columns(RMS) do
+	for row in Rows(RMS) do
+	  x := HClass(d, RMSElement(RMS, row, Identity(G), col) ^ inv);
+	  if IsIdempotent(Elements(x)[1])
+		then m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 1;
+	  else m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 0;
+	  fi;
+	od;
+  od;
+  Add(grams,m);
+  od;
+  return grams;
+end;
+
+AllSimplesRMotz := function(n)
+  local k,ranks,ranksk,m;
+  ranks := [];
+  for k in [0..n] do
+	ranksk := [];
+	for m in gramRMotz(n,k) do
+	  Add(ranksk,RankMat(m));
+	od;
+  Add(ranks,ranksk);
+  od;
+  return ranks;
+end;

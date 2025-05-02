@@ -1,0 +1,506 @@
+LoadPackage("semigroups");
+
+#for generating the cell structure
+dotstr := function(M)
+  DotString(M);
+  FileString("[FILEPATH]", DotString(M));
+end;
+#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
+
+###Defining RTL:
+
+#Of the form 121212...
+IsRTL := function(bipartition)
+  local a,aneg,i,j,n,pair;
+  bipartition := ExtRepOfObj(bipartition);
+  n := Size(bipartition);
+  a := []*n;
+  for i in [1..n] do
+	if i mod 2 <> 0
+	  then a[i] := 1;
+	elif i mod 2 = 0
+	  then a[i] := 2;
+	fi;
+  od;
+  aneg := a;
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0 then
+	  i := pair[1];
+	  j := pair[2];
+	  if a[i] <> 1 or a[j] <> 2
+		then return false;
+	  fi;
+	elif pair[1] < 0 and pair[2] < 0 then
+	  i := -pair[1];
+	  j := -pair[2];
+	  if aneg[i] <> 2 or aneg[j] <> 1
+		then return false;
+	  fi;
+	elif pair[1]*pair[2] < 0 then
+	  i := pair[1];
+	  j := -pair[2];
+	  if a[i] <> aneg[j]
+		then return false;
+	  fi;
+	fi;
+  od;
+  return true;
+end;
+
+SizeRTL := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := JonesMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRTLEnd(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return Size(list);
+end;
+
+AllRTL := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := JonesMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRTLEnd(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return list;
+end;
+
+#Of the form 212121...
+IsRTL2 := function(bipartition)
+  local a,aneg,i,j,n,pair;
+  bipartition := ExtRepOfObj(bipartition);
+  n := Size(bipartition);
+  a := []*n;
+  for i in [1..n] do
+	if i mod 2 <> 0
+	  then a[i] := 2;
+	elif i mod 2 = 0
+	  then a[i] := 1;
+	fi;
+  od;
+  aneg := a;
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0 then
+	  i := pair[1];
+	  j := pair[2];
+	  if a[i] <> 1 or a[j] <> 2
+		then return false;
+	  fi;
+	elif pair[1] < 0 and pair[2] < 0 then
+	  i := -pair[1];
+	  j := -pair[2];
+	  if aneg[i] <> 2 or aneg[j] <> 1
+		then return false;
+	  fi;
+	elif pair[1]*pair[2] < 0 then
+	  i := pair[1];
+	  j := -pair[2];
+	  if a[i] <> aneg[j]
+		then return false;
+	  fi;
+	fi;
+  od;
+  return true;
+end;
+
+SizeRTL2 := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := JonesMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRTLEnd2(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return Size(list);
+end;
+
+AllRTL2 := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := JonesMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRTLEnd2(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return list;
+end;
+
+#Using a generating set for 121212...
+RTLGenerated := function(n)
+  local gens,previousgens,gen,next,i;
+  if n < 0
+	then return "give something positive please";
+  elif n = 0
+	then return Monoid(Bipartition([]));
+  elif n = 1
+	then return Monoid(Bipartition([[1,-1]]));
+  elif n = 2
+	then return Monoid(Bipartition([[1,-1],[2,-2]]));
+  elif n = 3
+	then return Monoid([Bipartition([[1,2],[3,-1],[-2,-3]])]);
+  elif n = 4
+	then return Monoid([
+		Bipartition([[1,2],[3,-1],[4,-4],[-2,-3]]),
+		Bipartition([[1,-1],[2,-4],[3,4],[-2,-3]])
+		]);
+  elif n = 5 
+	then return Monoid([
+		Bipartition([[ 1, -1 ], [ 2, -4 ], [ 3, 4 ], [ 5, -5 ], [ -2, -3 ]]),
+		Bipartition([[ 1, 2 ], [ 3, -1 ], [ 4, -2 ], [ 5, -3 ], [ -4, -5 ]])
+		]);
+  fi;
+  previousgens := Generators(RTLGenerated(n-1)); 
+  gens := [];
+  for gen in previousgens do
+	  gen := ExtRepOfObj(gen);
+	  gen := List(gen);
+	  Add(gen,[n,-n]);
+	  Add(gens,Bipartition(gen));
+  od;
+  if n mod 2 = 0 then 
+	next := [[n-2,-n],[n-1,n],[-(n-2),-(n-1)]];
+	for i in [1..(n-3)] do
+	  Add(next,[i,-i]);
+	od;
+  elif n mod 2 <> 0 then
+	next := [[1,2],[-(n-1),-n]];
+	for i in [1..(n-2)] do
+	  Add(next,[i+2,-i]);
+	od;
+  fi;
+  Add(gens,Bipartition(next));
+  return Monoid(gens);
+end;
+
+GeneratorsAndRelationsRTL := function(n)
+  return [Generators(RTLGenerated(n)),RelationsOfFpMonoid(Image(IsomorphismFpMonoid(RTLGenerated(n))))];
+end;
+
+NumStrandsRTL := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if pair[1]*pair[2] < 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+RTLGeneratedk := function(n,k)
+  local M,elem,list;
+  M := Elements(RTLGenerated(n));
+  list := [];
+  for elem in M do
+	if NumStrandsRTL(elem) = k
+	  then Add(list,elem);
+	fi;
+  od;
+  return list;
+end;
+
+###Cell sizes
+
+#Setup for counting top/bottom half diagrams
+TopHalfDiagram := function(bipartition)
+  local pair,cupposition,lineposition;
+  cupposition := [];
+  lineposition := [];
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0
+	  then Add(cupposition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(lineposition,pair[1]);
+	else break;
+	fi;
+  od;
+  return [cupposition,lineposition];
+end;
+
+BottomHalfDiagram := function(bipartition) 
+  local pair,capposition,lineposition;
+  capposition := [];
+  lineposition := [];
+  bipartition := -ExtRepOfObj(bipartition);
+  bipartition := List(bipartition);  
+  Sort( bipartition, function(v,w) return -v[2] < -w[2]; end );
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0
+	  then Add(capposition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(lineposition,pair[2]);
+	else break;
+	fi;
+  od;
+  return [capposition,lineposition];
+end;
+
+IsTopHalfDiagram := function(bipartition,position)
+  local cupsbipartition,linesbipartition,pair,cupposition,lineposition,matches,i;
+  cupposition := position[1];
+  lineposition := position[2];
+  bipartition := ExtRepOfObj(bipartition);
+  cupsbipartition := [];
+  linesbipartition := [];
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0
+	  then Add(cupsbipartition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(linesbipartition,pair);
+	else break;
+	fi;
+  od;
+  if Size(cupsbipartition) <> Size(cupposition)
+	then return false;
+  elif Size(linesbipartition) <> Size(lineposition)
+	then return false;
+  fi;
+  matches := [];
+  for i in [1..Size(cupsbipartition)] do
+	if cupsbipartition[i][1] = cupposition[i][1] and cupsbipartition[i][2] = cupposition[i][2] 
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(linesbipartition)] do
+	if linesbipartition[i][1] = lineposition[i]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  return Sum(matches) = Size(matches);
+end;
+
+IsBottomHalfDiagram := function(bipartition,position)
+  local capsbipartition,linesbipartition,pair,capposition,lineposition,matches,i;
+  capposition := position[1];
+  lineposition := position[2];
+  bipartition := -ExtRepOfObj(bipartition);
+  bipartition := List(bipartition);
+  Sort( bipartition, function(v,w) return -v[2] < -w[2]; end );
+  capsbipartition := [];
+  linesbipartition := [];
+  for pair in bipartition do
+	if pair[1] > 0 and pair[2] > 0
+	  then Add(capsbipartition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(linesbipartition,pair);
+	else break;
+	fi;
+  od;
+  if Size(capsbipartition) <> Size(capposition)
+	then return false;
+  elif Size(linesbipartition) <> Size(lineposition)
+	then return false;
+  fi;
+  matches := [];
+  for i in [1..Size(capsbipartition)] do
+	if capsbipartition[i][1] = capposition[i][1] and capsbipartition[i][2] = capposition[i][2] 
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(linesbipartition)] do
+	if linesbipartition[i][2] = lineposition[i]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  return Sum(matches) = Size(matches);
+end;
+
+FindAllTopPositions := function(bipartitions)
+  local positions,bipartition;
+  positions := [];
+  for bipartition in bipartitions do
+	AddSet(positions,TopHalfDiagram(bipartition));
+  od;
+  return positions;
+end;
+
+FindAllBottomPositions := function(bipartitions)
+  local positions,bipartition;
+  positions := [];
+  for bipartition in bipartitions do
+	AddSet(positions,BottomHalfDiagram(bipartition));
+  od;
+  return positions;
+end;
+
+CNTTopHalfDiagram := function(bipartitions,position)
+  local i,bipartition;
+  i := 0;
+  for bipartition in bipartitions do
+	if IsTopHalfDiagram(bipartition,position) = true
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+CNTBottomHalfDiagram := function(bipartitions,position)
+  local i,bipartition;
+  i := 0;
+  for bipartition in bipartitions do
+	if IsBottomHalfDiagram(bipartition,position) = true
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+CNTTopReps := function(bipartitions)
+  local positions,position,sizes;
+  positions := FindAllTopPositions(bipartitions);
+  sizes := [];
+  for position in positions do
+	Add(sizes,[position,CNTTopHalfDiagram(bipartitions,position)]);
+  od;
+  return sizes;
+end;
+
+CNTBottomReps := function(bipartitions)
+  local positions,position,sizes;
+  positions := FindAllBottomPositions(bipartitions);
+  sizes := [];
+  for position in positions do
+	Add(sizes,[position,CNTBottomHalfDiagram(bipartitions,position)]);
+  od;
+  return sizes;
+end;
+
+#sizes of right cells
+CNTAllTopRepsRTLkstrands := function(n,k)
+  local bipartitions;
+  bipartitions := RTLGeneratedk(n,k);
+  return CNTTopReps(bipartitions);
+end;
+
+#sizes of left cells
+CNTAllBottomRepsRTLkstrands := function(n,k)
+  local bipartitions;
+  bipartitions := RTLGeneratedk(n,k);
+  return CNTBottomReps(bipartitions);
+end;
+
+#Gram matrices to compute simple reps:
+gramRTL := function(n,k)
+  local G,r,l,i,Jclasses,Jclass,j,class,positions,pos,elem,mat,R,L,H,d,iso,inv,RMS,m,x,row,col;
+  if n mod 2 = 0 and k = 0
+	then return [[1]];
+  elif (n-k) mod 2 <> 0
+	then return fail;
+  fi;
+
+  #J classes in GAP are done in decreasing order of the number of through strands
+  Jclasses := List(DClasses(FRMGenerated(n)));
+  Jclasses := Reversed(Jclasses);
+  
+  if n mod 2 = 0
+	then Jclass := Jclasses[k/2];
+  else 
+	Jclass := Jclasses[(k+1)/2];
+  fi;
+  
+  d := Jclass;
+  iso := InjectionNormalizedPrincipalFactor(d);
+  inv := InverseGeneralMapping(iso);
+  RMS := Range(iso);
+  mat := Matrix(RMS);
+  G := UnderlyingSemigroup(RMS);
+  r := Size(Columns(RMS));
+  l := Size(Rows(RMS));
+  m := NullMat(r,l);
+  for col in Columns(RMS) do
+	for row in Rows(RMS) do
+	  x := HClass(d, RMSElement(RMS, row, Identity(G), col) ^ inv);
+	  if IsIdempotent(Elements(x)[1])
+		then m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 1;
+	  else m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 0;
+	  fi;
+	od;
+  od;
+  return m;
+end;
+
+AllSimplesRTL := function(n)
+  local strands,k,ranks;
+  strands := [0..n];
+  ranks := [];
+  for k in strands do
+	if (n-k) mod 2 = 0
+	  then Add(ranks,RankMat(gramRTL(n,k)));
+	fi;
+  od;
+  return ranks;
+end;
+
+gramTL := function(n,k)
+  local G,r,l,i,Jclasses,Jclass,j,class,pos,elem,mat,R,L,H,d,iso,inv,RMS,m,x,row,col;
+  if (n-k) mod 2 <> 0
+	then return fail;
+  fi;
+
+  #J classes in GAP are done in decreasing order of the number of through strands
+  Jclasses := List(DClasses(JonesMonoid(n)));
+  Jclasses := Reversed(Jclasses);
+
+  if n mod 2 = 0
+	then if k = 0
+	  then Jclass := Jclasses[1];
+	else Jclass := Jclasses[k/2+1];
+	fi;
+  else 
+	Jclass := Jclasses[(k+1)/2];
+  fi;
+  
+  d := Jclass;
+  iso := InjectionNormalizedPrincipalFactor(d);
+  inv := InverseGeneralMapping(iso);
+  RMS := Range(iso);
+  mat := Matrix(RMS);
+  G := UnderlyingSemigroup(RMS);
+  r := Size(Columns(RMS));
+  l := Size(Rows(RMS));
+  m := NullMat(r,l);
+  for col in Columns(RMS) do
+	for row in Rows(RMS) do
+	  x := HClass(d, RMSElement(RMS, row, Identity(G), col) ^ inv);
+	  if IsIdempotent(Elements(x)[1])
+		then m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 1;
+	  else m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 0;
+	  fi;
+	od;
+  od;
+  return m;
+end;
+
+AllSimplesTL := function(n)
+  local strands,k,ranks;
+  strands := [0..n];
+  ranks := [];
+  for k in strands do
+	if (n-k) mod 2 = 0
+	  then Add(ranks,RankMat(gramTL(n,k)));
+	fi;
+  od;
+  return ranks;
+end;

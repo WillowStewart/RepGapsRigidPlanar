@@ -1,0 +1,439 @@
+LoadPackage("semigroups");
+
+#for generating the cell structure
+dotstr := function(M)
+  DotString(M);
+  FileString("[FILEPATH]", DotString(M));
+end;
+#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
+
+###The code is essentially the same as that used for RMo
+IsRpRook := function(bipartition)
+  local a,aneg,i,j,n,pair;
+  bipartition := ExtRepOfObj(bipartition);
+  n := Size(bipartition);
+  a := []*n;
+  for i in [1..n] do
+	if i mod 2 <> 0
+	  then a[i] := 1;
+	elif i mod 2 = 0
+	  then a[i] := 2;
+	fi;
+  od;
+  aneg := a;
+  for pair in bipartition do
+	if Size(pair) = 1 then
+	  if pair[1] > 0
+		then i := pair[1];
+		if aneg[i] <> a[i]
+		  then return false;
+		fi;
+	  elif pair[1] < 0
+		then i := -pair[1];
+		if a[i] <> aneg[i]
+		  then return false;
+		fi;
+	  fi;
+	elif pair[1]*pair[2] < 0 then
+	  i := pair[1];
+	  j := -pair[2];
+	  if a[i] <> aneg[j]
+		then return false;
+	  fi;
+	else return false;
+	fi;
+  od;
+  return true;
+end;
+
+SizeRpRook := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := MotzkinMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRpRook(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return Size(list);
+end;
+
+AllRpRook := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := MotzkinMonoid(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRpRook(bipartition) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return list;
+end;
+
+RpRookGenerated := function(n)
+  local gens,previousgens,gen,next1,i,nextall,next2;
+  if n < 0
+	then return "give something positive please";
+  elif n = 0
+	then return Monoid(Bipartition([]));
+  elif n = 1
+	then return Monoid([Bipartition([[1,-1]]),Bipartition([[1],[-1]])]);
+  elif n = 2
+	then return Monoid([
+        Bipartition([[1,-1],[2,-2]]),
+        Bipartition([[1],[2,-2],[-1]]),
+        Bipartition([[1,-1],[2],[-2]])
+        ]);
+  elif n = 3
+	then return Monoid([
+		Bipartition([[1],[2,-2],[-1],[3,-3]]),
+		Bipartition([[1,-1],[2],[-2],[3,-3]]),
+		Bipartition([[1,-1],[2,-2],[3],[-3]]),
+		Bipartition([[1,-3],[2],[3],[-1],[-2]]),
+		Bipartition([[1],[2],[3,-1],[-2],[-3]])
+		]);
+  elif n = 4
+	then return Monoid([
+        Bipartition([[1],[2,-2],[-1],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2],[-2],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3],[-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3,-3],[4],[-4]]),
+		Bipartition([[1,-3],[2],[3],[-1],[-2],[4,-4]]),
+		Bipartition([[1],[2],[3,-1],[-2],[-3],[4,-4]]),
+		Bipartition([[2,-4],[3],[4],[-2],[-3],[1,-1]]),
+		Bipartition([[2],[3],[4,-2],[-3],[-4],[1,-1]])
+        ]);
+  elif n = 5
+	then return Monoid([
+        Bipartition([[1],[2,-2],[-1],[3,-3],[4,-4],[5,-5]]),
+        Bipartition([[1,-1],[2],[-2],[3,-3],[4,-4],[5,-5]]),
+        Bipartition([[1,-1],[2,-2],[3],[-3],[4,-4],[5,-5]]),
+        Bipartition([[1,-1],[2,-2],[3,-3],[4],[-4],[5,-5]]),
+		Bipartition([[1,-3],[2],[3],[-1],[-2],[4,-4],[5,-5]]),
+		Bipartition([[1],[2],[3,-1],[-2],[-3],[4,-4],[5,-5]]),
+		Bipartition([[2,-4],[3],[4],[-2],[-3],[1,-1],[5,-5]]),
+		Bipartition([[2],[3],[4,-2],[-3],[-4],[1,-1],[5,-5]]),
+		Bipartition([[1,-1],[2,-2],[3,-3],[4,-4],[5],[-5]]),
+		Bipartition([[3,-5],[4],[5],[-3],[-4],[1,-1],[2,-2]]),
+		Bipartition([[3],[4],[5,-3],[-4],[-5],[1,-1],[2,-2]])
+        ]);
+  fi;
+  previousgens := Generators(RpRookGenerated(n-1)); 
+  gens := [];
+  for gen in previousgens do
+	gen := ExtRepOfObj(gen);
+	gen := List(gen);
+	Add(gen,[n,-n]);
+	Add(gens,Bipartition(gen));
+  od;
+  nextall := [[n],[-n]];
+  for i in [1..(n-1)] do
+	Add(nextall,[i,-i]);
+  od;
+  Add(gens,Bipartition(nextall));
+  next1 := [[n-2,-n],[n-1],[n],[-(n-2)],[-(n-1)]];
+	for i in [1..(n-3)] do
+	  Add(next1,[i,-i]);
+	od;
+  next2 := [[n-2],[n-1],[n,-(n-2)],[-(n-1)],[-n]];
+	for i in [1..(n-3)] do
+	  Add(next2,[i,-i]);
+	od;
+  Add(gens,Bipartition(next1));
+  Add(gens,Bipartition(next2));
+  return Monoid(gens);
+end;
+
+RpRookGeneratedk := function(n,k)
+  local M,elem,list;
+  M := Elements(RpRookGenerated(n));
+  list := [];
+  for elem in M do
+	if NumStrandsRpRook(elem) = k
+	  then Add(list,elem);
+	fi;
+  od;
+  return list;
+end;
+
+NumStrandsRpRook := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i;
+	elif pair[1]*pair[2] < 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+NumStrandsOddEvenRpRook := function(bipartition)
+  local i,j,pair;
+  i := 0;
+  j := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i;
+		j := j;
+	elif pair[1]*pair[2] < 0 then
+	  if pair[1] mod 2 = 1
+		then i := i + 1;
+	  elif pair[1] mod 2 = 0
+		then j := j + 1;
+	  fi;
+	fi;
+  od;
+  return [i,j];
+end;
+
+NumDotsRpRook := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i+1;
+	fi;
+  od;
+  return i;
+end;
+
+TopHalfDiagramRpRook := function(bipartition)
+  local pair,cupposition,lineposition,topdotposition;
+  cupposition := [];
+  lineposition := [];
+  topdotposition := [];
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotposition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupposition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(lineposition,pair[1]);
+	else break;
+	fi;
+  od;
+  return [cupposition,topdotposition,lineposition];
+end;
+
+IsTopHalfDiagramRpRook := function(bipartition,position)
+  local cupsbipartition,linesbipartition,pair,cupposition,lineposition,matches,i,topdotposition,topdotsbipartition;
+  cupposition := position[1];
+  topdotposition := position[2];
+  lineposition := position[3];
+  bipartition := ExtRepOfObj(bipartition);
+  cupsbipartition := [];
+  topdotsbipartition := [];
+  linesbipartition := [];
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotsbipartition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupsbipartition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(linesbipartition,pair);
+	else break;
+	fi;
+  od;
+  if Size(topdotsbipartition) <> Size(topdotposition)
+	then return false;
+  elif Size(cupsbipartition) <> Size(cupposition)
+	then return false;
+  elif Size(linesbipartition) <> Size(lineposition)
+	then return false;
+  fi;
+  matches := [];
+  for i in [1..Size(cupsbipartition)] do
+	if cupsbipartition[i][1] = cupposition[i][1] and cupsbipartition[i][2] = cupposition[i][2] 
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(topdotsbipartition)] do
+	if topdotsbipartition[i][1] = topdotposition[i][1]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(linesbipartition)] do
+	if linesbipartition[i][1] = lineposition[i]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  return Sum(matches) = Size(matches);
+end;
+
+FindAllTopPositionsRpRook := function(bipartitions)
+  local positions,bipartition;
+  positions := [];
+  for bipartition in bipartitions do
+	AddSet(positions,TopHalfDiagramRpRook(bipartition));
+  od;
+  return positions;
+end;
+
+CNTTopHalfDiagramRpRook := function(bipartitions,position)
+  local i,bipartition;
+  i := 0;
+  for bipartition in bipartitions do
+	if IsTopHalfDiagramRpRook(bipartition,position) = true
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+CNTTopRepsRpRook := function(bipartitions)
+  local positions,position,sizes;
+  positions := FindAllTopPositionsRpRook(bipartitions);
+  sizes := [];
+  for position in positions do
+	Add(sizes,[position,CNTTopHalfDiagramRpRook(bipartitions,position)]);
+  od;
+  return sizes;
+end;
+
+CNTAllTopRepsRpRookkstrands := function(n,k)
+  local bipartitions;
+  bipartitions := RpRookGeneratedk(n,k);
+  return CNTTopRepsRpRook(bipartitions);
+end;
+
+RightRepRpRookSeq := function(n,k,seq)
+  local even,odd,i,partitions,list,listlist,partition;
+	if k = 0
+	  then return 1;
+	fi;
+	even := [];
+	odd := [];
+	if seq[1] = 1
+	  then Add(even,1);
+	else
+	  Add(odd,1);
+	fi;
+	if seq[k] = 1
+	  then Add(odd,k+1);
+	else
+	  Add(even,k+1);
+	fi;
+	for i in [2..k] do
+	  if (seq[i-1] = 1 and seq[i] = 1) or (seq[i-1] = 2 and seq[i] = 2)
+		then Add(odd,i);
+	  elif (seq[i-1] = 1 and seq[i] = 2) or (seq[i-1] = 2 and seq[i] = 1)
+		then Add(even,i);
+	  fi;
+	od;
+
+	listlist := [];
+	partitions := OrderedPartitions((n-(k+Size(odd)))/2+k+1,k+1);
+
+	for partition in partitions do
+	  list := []*(k+1);
+	  if 1 in even then
+		if seq[1] = 1
+		  then list[1] := 1;
+		elif seq[1] = 2
+		  then return "something went wrong, seq[1] = 2 but 1st block is even";
+		fi;
+	  elif 1 in odd then 
+	  if seq[1] = 1
+		  then return "something went wrong, seq[1] = 1 but 1st block is odd";
+		elif seq[1] = 2
+		  then list[1] := 1;
+		fi;
+	  fi;
+	  if (k+1) in even then
+		if seq[k] = 1
+		  then return "something went wrong, seq[k] = 1 but last block is even";
+		elif seq[k] = 2
+		  then list[k+1] :=1;
+	    fi;
+	  elif (k+1) in odd then
+	    if seq[k] = 1
+		  then list[k+1] := 1;
+		elif seq[k] = 2
+		  then return "something went wrong, seq[k] = 2 but last block is odd";
+	    fi;
+	  fi;
+	  for i in [2..k] do
+		if i in even then
+		  if seq[i-1] = 1
+			then list[i] := 1;
+		  elif seq[i-1] = 2
+			then list[i] := 1;
+		  fi;
+		elif i in odd then
+		  if seq[i-1] = 1
+			then list[i] := 1;
+		  elif seq[i-1] = 2
+			then list[i] := 1;
+		  fi;
+		fi;
+	  od;
+	  Add(listlist,Product(list));
+	od;
+  return Sum(listlist);
+end;
+
+gramRpRook := function(n,k)
+  local G,r,l,i,Jclasses,JclasseskStrands,Jclass,j,class,jclass,positions,pos,elem,mat,d,iso,inv,RMS,m,x,row,col,grams;
+  Jclasses := List(DClasses(RpRookGenerated(n)));
+  #need to group Jclasses into number of through strands, and loop over each J class with that number of through strands
+  JclasseskStrands := [];
+  for Jclass in Jclasses do
+	if NumStrandsRMotz(Elements(Jclass)[1]) = k
+	  then Add(JclasseskStrands,Jclass);
+	fi;
+  od;
+
+  grams := [];
+  for Jclass in JclasseskStrands do
+  d := Jclass;
+  iso := InjectionNormalizedPrincipalFactor(d);
+  inv := InverseGeneralMapping(iso);
+  RMS := Range(iso);
+  mat := Matrix(RMS);
+  G := UnderlyingSemigroup(RMS);
+  r := Size(Columns(RMS));
+  l := Size(Rows(RMS));
+  m := NullMat(r,l);
+  for col in Columns(RMS) do
+	for row in Rows(RMS) do
+	  x := HClass(d, RMSElement(RMS, row, Identity(G), col) ^ inv);
+	  if IsIdempotent(Elements(x)[1])
+		then m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 1;
+	  else m[Position(Columns(RMS),col),Position(Rows(RMS),row)] := 0;
+	  fi;
+	od;
+  od;
+  Add(grams,m);
+  od;
+  return grams;
+end;
+
+AllSimplesRpRook := function(n)
+  local k,ranks,ranksk,m;
+  ranks := [];
+  for k in [0..n] do
+	ranksk := [];
+	for m in gramRpRook(n,k) do
+	  Add(ranksk,RankMat(m));
+	od;
+  Add(ranks,ranksk);
+  od;
+  return ranks;
+end;

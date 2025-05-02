@@ -1,0 +1,190 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[      5796,        182]
+NotebookOptionsPosition[      4590,        154]
+NotebookOutlinePosition[      4994,        170]
+CellTagsIndexPosition[      4951,        167]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"(*", "TL", "*)"}]], "Input",
+ CellChangeTimes->{{3.954966515507986*^9, 
+  3.954966516858433*^9}},ExpressionUUID->"ea914ab2-066c-0c42-9474-\
+50df0c38942d"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"Size", " ", "asymptotic"}], "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"FullSimplify", "[", 
+   RowBox[{"Asymptotic", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"1", "/", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"2", "n"}], "+", "1"}], ")"}]}], "*", 
+      RowBox[{"Binomial", "[", 
+       RowBox[{
+        RowBox[{"4", "n"}], ",", 
+        RowBox[{"2", "n"}]}], "]"}]}], ",", 
+     RowBox[{"n", "->", "Infinity"}]}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.9549665222355766`*^9, 3.9549665571844654`*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"463ffeb7-3164-4b46-b30b-517d8d366d83"],
+
+Cell[BoxData[
+ FractionBox[
+  SuperscriptBox["2", 
+   RowBox[{
+    RowBox[{"-", 
+     FractionBox["3", "2"]}], "+", 
+    RowBox[{"4", " ", "n"}]}]], 
+  RowBox[{
+   SuperscriptBox["n", 
+    RowBox[{"3", "/", "2"}]], " ", 
+   SqrtBox["\[Pi]"]}]]], "Output",
+ CellChangeTimes->{3.954966559936928*^9},
+ CellLabel->"Out[1]=",ExpressionUUID->"709c3f37-f246-894a-a1d1-7dddec16d29d"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"(*", "pRo", "*)"}]], "Input",
+ CellChangeTimes->{{3.9549665714974537`*^9, 
+  3.954966594782875*^9}},ExpressionUUID->"b75463cd-b4c7-fc4d-b2b6-\
+70ea9022513d"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"Representation", " ", "gap", " ", "asymptotics"}], "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"FullSimplify", "[", 
+    RowBox[{"Asymptotic", "[", 
+     RowBox[{
+      RowBox[{"Binomial", "[", 
+       RowBox[{
+        RowBox[{"2", "n"}], ",", "n"}], "]"}], ",", 
+      RowBox[{"n", "->", "Infinity"}]}], "]"}], "]"}], "\[IndentingNewLine]", 
+   RowBox[{"FullSimplify", "[", 
+    RowBox[{"Asymptotic", "[", 
+     RowBox[{
+      RowBox[{"FunctionExpand", "[", 
+       RowBox[{"Binomial", "[", 
+        RowBox[{
+         RowBox[{"2", "n"}], ",", 
+         RowBox[{"n", "-", 
+          RowBox[{"Sqrt", "[", 
+           RowBox[{"2", "n"}], "]"}]}]}], "]"}], "]"}], ",", 
+      RowBox[{"n", "->", "Infinity"}]}], "]"}], "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.954966647363554*^9, 3.9549667239716263`*^9}},
+ CellLabel->"In[5]:=",ExpressionUUID->"62c3818d-71f4-6e47-8f4c-b8612dd3e1f5"],
+
+Cell[BoxData[
+ FractionBox[
+  SuperscriptBox["4", "n"], 
+  RowBox[{
+   SqrtBox["n"], " ", 
+   SqrtBox["\[Pi]"]}]]], "Output",
+ CellChangeTimes->{{3.954966698595524*^9, 3.954966725373476*^9}},
+ CellLabel->"Out[5]=",ExpressionUUID->"ef5c2556-a42f-6142-8d99-8efdac110a19"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{
+   SuperscriptBox["4", "n"], " ", 
+   SuperscriptBox["\[ExponentialE]", 
+    RowBox[{
+     RowBox[{"-", "2"}], "-", 
+     FractionBox["2", 
+      RowBox[{"3", " ", "n"}]]}]]}], 
+  RowBox[{
+   SqrtBox["n"], " ", 
+   SqrtBox["\[Pi]"]}]]], "Output",
+ CellChangeTimes->{{3.954966698595524*^9, 3.9549667260208206`*^9}},
+ CellLabel->"Out[6]=",ExpressionUUID->"a7235603-72be-6947-a5f6-49a19ab8b0fb"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"Size", " ", "asymptotic"}], "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"FullSimplify", "[", 
+   RowBox[{"Asymptotic", "[", 
+    RowBox[{
+     RowBox[{"Binomial", "[", 
+      RowBox[{
+       RowBox[{"4", "n"}], ",", 
+       RowBox[{"2", "n"}]}], "]"}], ",", 
+     RowBox[{"n", "->", "Infinity"}]}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.9549665985476456`*^9, 3.9549666178354664`*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"86b1cf0b-e831-6d46-baec-a2de8b0a5a1a"],
+
+Cell[BoxData[
+ FractionBox[
+  SuperscriptBox["2", 
+   RowBox[{
+    RowBox[{"-", 
+     FractionBox["1", "2"]}], "+", 
+    RowBox[{"4", " ", "n"}]}]], 
+  RowBox[{
+   SqrtBox["n"], " ", 
+   SqrtBox["\[Pi]"]}]]], "Output",
+ CellChangeTimes->{3.9549666193456345`*^9},
+ CellLabel->"Out[2]=",ExpressionUUID->"3cde7867-7939-6d46-a2c2-6edc67fc41d5"]
+}, Open  ]]
+},
+WindowSize->{582, 382},
+WindowMargins->{{183.5, Automatic}, {Automatic, 39.5}},
+FrontEndVersion->"14.2 for Microsoft Windows (64-bit) (March 14, 2025)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"228bffaf-e3f4-d146-8953-c968f0f32c4c"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 178, 4, 28, "Input",ExpressionUUID->"ea914ab2-066c-0c42-9474-50df0c38942d"],
+Cell[CellGroupData[{
+Cell[757, 28, 662, 18, 66, "Input",ExpressionUUID->"463ffeb7-3164-4b46-b30b-517d8d366d83"],
+Cell[1422, 48, 375, 12, 59, "Output",ExpressionUUID->"709c3f37-f246-894a-a1d1-7dddec16d29d"]
+}, Open  ]],
+Cell[1812, 63, 181, 4, 28, "Input",ExpressionUUID->"b75463cd-b4c7-fc4d-b2b6-70ea9022513d"],
+Cell[CellGroupData[{
+Cell[2018, 71, 947, 25, 104, "Input",ExpressionUUID->"62c3818d-71f4-6e47-8f4c-b8612dd3e1f5"],
+Cell[2968, 98, 269, 7, 51, "Output",ExpressionUUID->"ef5c2556-a42f-6142-8d99-8efdac110a19"],
+Cell[3240, 107, 431, 13, 78, "Output",ExpressionUUID->"a7235603-72be-6947-a5f6-49a19ab8b0fb"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3708, 125, 523, 13, 47, "Input",ExpressionUUID->"86b1cf0b-e831-6d46-baec-a2de8b0a5a1a"],
+Cell[4234, 140, 340, 11, 59, "Output",ExpressionUUID->"3cde7867-7939-6d46-a2c2-6edc67fc41d5"]
+}, Open  ]]
+}
+]
+*)
+

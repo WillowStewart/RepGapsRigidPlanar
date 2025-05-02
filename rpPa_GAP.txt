@@ -1,0 +1,446 @@
+LoadPackage("semigroups");
+
+#for generating the cell structure
+dotstr := function(M)
+  DotString(M);
+  FileString("[FILEPATH]", DotString(M));
+end;
+#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
+
+#Define planar partition monoid first 
+pPartGenerated := function(n)
+  local gens,previousgens,gen,next,i,nextall;
+  if n < 0
+	then return "give something positive please";
+  elif n = 0
+	then return Monoid(Bipartition([]));
+  elif n = 1
+	then return Monoid([Bipartition([[1,-1]]),Bipartition([[1],[-1]])]);
+  elif n = 2
+	then return Monoid([
+        Bipartition([[1,-1],[2,-2]]),
+        Bipartition([[1],[2,-2],[-1]]),
+        Bipartition([[1,-1],[2],[-2]]),
+		Bipartition([[1,2,-1,-2]])
+        ]);
+  elif n = 3
+	then return Monoid([
+		Bipartition([[1,-1],[2,-2],[3,-3]]),
+		Bipartition([[1],[2,-2],[-1],[3,-3]]),
+        Bipartition([[1,-1],[2],[-2],[3,-3]]),
+		Bipartition([[1,-1],[2,-2],[3],[-3]]),
+		Bipartition([[1,2,-1,-2],[3,-3]]),
+		Bipartition([[1,-1],[2,3,-2,-3]])
+		]);
+  fi;
+  previousgens := Generators(pPartGenerated(n-1)); 
+  gens := [];
+  for gen in previousgens do
+	gen := ExtRepOfObj(gen);
+	gen := List(gen);
+	Add(gen,[n,-n]);
+	Add(gens,Bipartition(gen));
+  od;
+  nextall := [[n],[-n]];
+  for i in [1..(n-1)] do
+	Add(nextall,[i,-i]);
+  od;
+  Add(gens,Bipartition(nextall));
+  next := [[n-1,n,-(n-1),-n]];
+  for i in [1..(n-2)] do
+	Add(next,[i,-i]);
+  od;
+  Add(gens,Bipartition(next));
+  return Monoid(gens);
+end;
+
+AllPositive := function(list)
+  local i;
+  for i in list do
+	if i < 0
+	  then return false;
+	fi;
+  od;
+  return true;
+end;
+
+AllNegative := function(list)
+  local i;
+  for i in list do
+	if i < 0
+	  then return false;
+	fi;
+  od;
+  return true;
+end;
+
+AllSame := function(list)
+  local i;
+  for i in list do
+	if i <> list[1]
+	  then return false;
+	fi;
+  od;
+  return true;
+end;
+
+NumPos := function(list)
+  local i,elem;
+  i := 0;
+  for elem in list do
+	if elem > 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+NumNeg := function(list)
+  local i,elem;
+  i := 0;
+  for elem in list do
+	if elem < 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+IsRpPart := function(bipartition,n)
+local a,aneg,i,j,pair,elem,nums;
+  bipartition := ExtRepOfObj(bipartition);
+  a := []*n;
+  for i in [1..n] do
+	if i mod 2 <> 0
+	  then a[i] := 1;
+	elif i mod 2 = 0
+	  then a[i] := 2;
+	fi;
+  od;
+  aneg := a;
+  for pair in bipartition do
+	if Size(pair) = 1 then
+	  if pair[1] > 0
+		then i := pair[1];
+		if aneg[i] <> a[i]
+		  then return false;
+		fi;
+	  elif pair[1] < 0
+		then i := -pair[1];
+		if a[i] <> aneg[i]
+		  then return false;
+		fi;
+	  fi;
+	elif Size(pair) > 2 then 
+	  nums := [];
+	  for elem in pair do
+		if elem > 0
+		  then Add(nums,a[elem]);
+		elif elem < 0
+		  then Add(nums,aneg[-elem]);
+		fi;
+	  od;
+	  if AllSame(nums) = false
+	    then return false;
+	  fi;
+	elif pair[1] > 0 and pair[2] > 0 then
+	  i := pair[1];
+	  j := pair[2];
+	  if (a[i] = 2 and a[j] = 1)
+		then return false;
+	  fi;
+	elif pair[1] < 0 and pair[2] < 0 then
+	  i := -pair[1];
+	  j := -pair[2];
+	  if aneg[i] = 1 and aneg[j] = 2
+		then return false;
+	  fi;
+	elif pair[1]*pair[2] < 0 then
+	  i := pair[1];
+	  j := -pair[2];
+	  if a[i] <> aneg[j]
+		then return false;
+	  fi;
+	fi;
+  od;
+  return true;
+end;
+
+SizeRpPart := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := pPartGenerated(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRpPart(bipartition,n) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return Size(list);
+end;
+
+AllRpPart := function(n)
+  local list,M,bipartitions,bipartition;
+  
+  list := [];;
+  M := pPartGenerated(n);;
+  bipartitions := Elements(M);;
+  for bipartition in bipartitions do
+    if IsRpPart(bipartition,n) = true
+      then Add(list,bipartition);
+    fi;
+  od;
+  return list;
+end;
+
+RpPartGenerated := function(n)
+  local gens,previousgens,gen,next,i,nextall,nextfrm,nextpart;
+  if n < 0
+	then return "give something positive please";
+  elif n = 0
+	then return Monoid(Bipartition([]));
+  elif n = 1
+	then return Monoid([Bipartition([[1,-1]]),Bipartition([[1],[-1]])]);
+  elif n = 2
+	then return Monoid([
+        Bipartition([[1,-1],[2,-2]]),
+        Bipartition([[1,2],[-1],[-2]]),
+        Bipartition([[1],[2,-2],[-1]]),
+        Bipartition([[1,-1],[2],[-2]])
+        ]);
+  elif n = 3
+	then return Monoid([
+		Bipartition([[1,2],[3,-1],[-2,-3]]),
+		Bipartition([[1,2],[-1],[-2],[3,-3]]),
+		Bipartition([[1],[2,-2],[-1],[3,-3]]),
+		Bipartition([[1,-1],[2],[-2],[3,-3]]),
+		Bipartition([[1,-1],[2,-2],[3],[-3]]),
+		Bipartition([[1,-1],[2],[3],[-2,-3]]),
+		Bipartition([[1,3,-1,-3],[2],[-2]])
+		]);
+  elif n = 4
+	then return Monoid([
+        Bipartition([[1,2],[3,-1],[4,-4],[-2,-3]]),
+        Bipartition([[1,-1],[2,-4],[3,4],[-2,-3]]),
+        Bipartition([[1,2],[-1],[-2],[3,-3],[4,-4]]),
+        Bipartition([[1],[2,-2],[-1],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2],[-2],[3,-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3],[-3],[4,-4]]),
+        Bipartition([[1,-1],[2],[3],[-2,-3],[4,-4]]),
+        Bipartition([[1,-1],[2,-2],[3,-3],[4],[-4]]),
+        Bipartition([[1,-1],[2,-2],[3,4],[-3],[-4]]),
+		Bipartition([[1,3,-1,-3],[2],[-2],[4,-4]]),
+		Bipartition([[1,-1],[2,4,-2,-4],[3],[-3]])
+        ]);
+  fi;
+  previousgens := Generators(RpPartGenerated(n-1)); 
+  gens := [];
+  for gen in previousgens do
+	gen := ExtRepOfObj(gen);
+	gen := List(gen);
+	Add(gen,[n,-n]);
+	Add(gens,Bipartition(gen));
+  od;
+  nextall := [[n],[-n]];
+  for i in [1..(n-1)] do
+	Add(nextall,[i,-i]);
+  od;
+  Add(gens,Bipartition(nextall));
+  if n mod 2 = 0 then 
+	next := [[n-1,n],[-(n-1)],[-n]];
+	for i in [1..(n-2)] do
+	  Add(next,[i,-i]);
+	od;
+	nextfrm := [[n-2,-n],[n-1,n],[-(n-2),-(n-1)]];
+	for i in [1..(n-3)] do
+	  Add(nextfrm,[i,-i]);
+	od;
+  elif n mod 2 <> 0 then
+	next := [[n-1],[n],[-(n-1),-n]];
+	for i in [1..(n-2)] do
+	  Add(next,[i,-i]);
+	od;
+	nextfrm := [[1,2],[-(n-1),-n]];
+	for i in [1..(n-2)] do
+	  Add(nextfrm,[i+2,-i]);
+	od;
+  fi;
+  Add(gens,Bipartition(next));
+  Add(gens,Bipartition(nextfrm));
+  nextpart := [[n-2,n,-(n-2),-n],[n-1],[-(n-1)]];
+  for i in [1..(n-3)] do
+	Add(nextpart,[i,-i]);
+  od;
+  Add(gens,Bipartition(nextpart));
+  return Monoid(gens);
+end;
+
+NumStrandsRpPart := function(bipartition)
+  local i,pair;
+  i := 0;
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1
+	  then i := i;
+	elif Size(pair) > 2 and AllNegative(pair) = false and AllPositive(pair) = false 
+	  then i := i + 1;
+	elif pair[1]*pair[2] < 0
+	  then i := i + 1;
+	fi;
+  od;
+  return i;
+end;
+
+RpPartGeneratedk := function(n,k)
+  local M,elem,list;
+  M := Elements(RpPartGenerated(n));
+  list := [];
+  for elem in M do
+	if NumStrandsRpPart(elem) = k
+	  then Add(list,elem);
+	fi;
+  od;
+  return list;
+end;
+
+TopHalfDiagramRpPart := function(bipartition)
+  local pair,cupposition,lineposition,topdotposition,propblockposition,propblock,i;
+  cupposition := [];
+  lineposition := [];
+  topdotposition := [];
+  propblockposition := [];
+  bipartition := ExtRepOfObj(bipartition);
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotposition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif Size(pair) > 2
+	  then propblock := [];
+		for i in pair do 
+		  if i > 0
+			then Add(propblock,i);
+		  fi;
+		od;
+	  Add(propblockposition,propblock);
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupposition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(lineposition,pair[1]);
+	else break;
+	fi;
+  od;
+  return [cupposition,topdotposition,lineposition,propblockposition];
+end;
+
+IsTopHalfDiagramRpPart := function(bipartition,position)
+  local cupsbipartition,linesbipartition,pair,cupposition,lineposition,matches,i,topdotposition,topdotsbipartition,propblockposition,propblock,propblocksbipartition,j;
+  cupposition := position[1];
+  topdotposition := position[2];
+  lineposition := position[3];
+  propblockposition := position[4];
+  bipartition := ExtRepOfObj(bipartition);
+  cupsbipartition := [];
+  topdotsbipartition := [];
+  linesbipartition := [];
+  propblocksbipartition := [];
+  for pair in bipartition do
+	if Size(pair) = 1 and pair[1] > 0
+	  then Add(topdotsbipartition,pair);
+	elif Size(pair) = 1
+	  then continue;
+	elif Size(pair) > 2
+	  then propblock := [];
+		for i in pair do 
+		  if i > 0
+			then Add(propblock,i);
+		  fi;
+		od;
+	  Add(propblocksbipartition,propblock);
+	elif pair[1] > 0 and pair[2] > 0
+	  then Add(cupsbipartition,pair);
+	elif pair[1]*pair[2] < 0
+	  then Add(linesbipartition,pair);
+	else break;
+	fi;
+  od;
+  if Size(topdotsbipartition) <> Size(topdotposition)
+	then return false;
+  elif Size(cupsbipartition) <> Size(cupposition)
+	then return false;
+  elif Size(linesbipartition) <> Size(lineposition)
+	then return false;
+  fi;
+  for i in [1..Size(propblocksbipartition)] do 
+	if Size(propblocksbipartition[i]) <> Size(propblockposition[i])
+	  then return false;
+	fi;
+  od;
+  matches := [];
+  for i in [1..Size(cupsbipartition)] do
+	if cupsbipartition[i][1] = cupposition[i][1] and cupsbipartition[i][2] = cupposition[i][2] 
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(topdotsbipartition)] do
+	if topdotsbipartition[i][1] = topdotposition[i][1]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(linesbipartition)] do
+	if linesbipartition[i][1] = lineposition[i]
+	  then Add(matches,1);
+	else Add(matches,0);
+	fi;
+  od;
+  for i in [1..Size(propblocksbipartition)] do 
+	for j in [1..Size(propblocksbipartition[i])] do
+	  if propblocksbipartition[i][j] = propblockposition[i][j]
+		then Add(matches,1);
+	  else Add(matches,0);
+	  fi;
+	od;
+  od;
+  return Sum(matches) = Size(matches);
+end;
+
+FindAllTopPositionsRpPart := function(bipartitions)
+  local positions,bipartition;
+  positions := [];
+  for bipartition in bipartitions do
+	AddSet(positions,TopHalfDiagramRpPart(bipartition));
+  od;
+  return positions;
+end;
+
+CNTTopHalfDiagramRpPart := function(bipartitions,position)
+  local i,bipartition,list;
+  i := 0;
+  #list := [];
+  for bipartition in bipartitions do
+	if IsTopHalfDiagramRpPart(bipartition,position) = true
+	  then i := i + 1;
+		#Add(list,bipartition);
+	fi;
+  od;
+  return i;
+end;
+
+CNTTopRepsRpPart := function(bipartitions)
+  local positions,position,sizes;
+  positions := FindAllTopPositionsRpPart(bipartitions);
+  sizes := [];
+  for position in positions do
+	Add(sizes,[position,CNTTopHalfDiagramRpPart(bipartitions,position)]);
+  od;
+  return sizes;
+end;
+
+CNTAllTopRepsRpPartkstrands := function(n,k)
+  local bipartitions;
+  bipartitions := RpPartGeneratedk(n,k);
+  return CNTTopRepsRpPart(bipartitions);
+end;
