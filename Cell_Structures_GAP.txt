@@ -1,0 +1,97 @@
+LoadPackage("semigroups");
+
+01Matrix := function(D)
+  local result, row, i;
+  
+  result := List(Matrix(NormalizedPrincipalFactor(D)), ShallowCopy);
+
+  for row in result do
+    for i in [1 .. Length(row)] do
+      if row[i] <> 0 then
+		row[i] := 1;
+	  fi;
+	od;
+  od;
+
+  return result;
+end;
+
+#Based on the DotString function from the Semigroups package: https://docs.gap-system.org/pkg/semigroups/doc/chap16_mj.html
+DotString2:= function(S)
+  local es, elts, str, i, color, pos, gp, iso, inv, RMS, mat, G, x, D, rel, ii,
+  di, j, dk, k, d, l, col, row;
+
+     es := IdempotentGeneratedSubsemigroup(S);
+     elts := Elements(es);  # JDM could be enumerator sorted
+
+  str := "//dot\n";
+  Append(str, "digraph  DClasses {\n");
+  Append(str, "node [shape=plaintext]\n");
+  Append(str, "edge [color=black,arrowhead=none]\n");
+  i := 0;
+  
+  for d in DClasses(S) do
+  
+    i := i + 1;
+    Append(str, String(i));
+    Append(str, " [shape=box style=invisible ");
+    Append(str, "label=<\n<TABLE BORDER=\"0\" CELLBORDER=\"1\"");
+    Append(str, " CELLPADDING=\"10\" CELLSPACING=\"0\"");
+    Append(str, Concatenation(" PORT=\"", String(i), "\">\n"));
+
+    if not IsRegularDClass(d) then
+      for l in LClasses(d) do
+        Append(str, "<TR>");
+        for x in HClasses(l) do
+          color := "white";
+          Append(str, Concatenation("<TD CELLPADDING=\"10\" BGCOLOR=\"",
+                                    color,
+                                    "\"><font color=\"white\">*</font></TD>"));
+        od;
+        Append(str, "</TR>\n");
+      od;
+      Append(str, "</TABLE>>];\n");
+      continue;
+    fi;
+	
+	mat := 01Matrix(d);
+
+    for col in [1..Size(mat[1])] do  # Columns of mat = RClasses
+      Append(str, "<TR>");
+      for row in [1..Size(mat)] do  # Rows of mat = LClasses
+        Append(str, "<TD BGCOLOR=\"");
+        if mat[row][col] <> 0 then
+          color := "gray";
+          Append(str, color);
+          Append(str, "\"");
+          Append(str, ">*");
+        else
+          color := "white";
+          Append(str, color);
+          Append(str, "\">");
+        fi;
+        Append(str, "</TD>");
+      od;
+      Append(str, "</TR>\n");
+    od;
+    Append(str, "</TABLE>>];\n");
+  od;
+  D := PartialOrderOfDClasses(S);
+  rel := OutNeighbours(DigraphReflexiveTransitiveReduction(D));
+  for i in [1 .. Length(rel)] do
+    ii := String(i);
+    for k in rel[i] do
+      Append(str, Concatenation(ii, " -> ", String(k), "\n"));
+    od;
+  od;
+  
+  Append(str, " }");
+
+  return str;
+end;
+
+#for generating the cell structure using this function
+dotstr := function(M) #M is a monoid; use the code in other files to produce the desired Rigid monoid.
+  FileString("[FILEPATH]", DotString2(M));
+end;
+#then do in windows powershell (ensure in correct directory first): dot -Tsvg [FILEPATH].dot -Tsvg -o [FILEPATH].svg

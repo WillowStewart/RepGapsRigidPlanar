@@ -1,12 +1,5 @@
 LoadPackage("semigroups");
 
-#for generating the cell structure
-dotstr := function(M)
-  DotString(M);
-  FileString("[FILEPATH]", DotString(M));
-end;
-#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
-
 ###Defining RTL:
 
 #Of the form 121212...

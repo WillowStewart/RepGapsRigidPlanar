@@ -1,12 +1,5 @@
 LoadPackage("semigroups");
 
-#for generating the cell structure
-dotstr := function(M)
-  DotString(M);
-  FileString("[FILEPATH]", DotString(M));
-end;
-#then do in windows powershell (ensure in correct directory first): dot -Tsvg cell.dot -Tsvg -o cell.svg
-
 ###The code is essentially the same as that used for RMo
 IsRpRook := function(bipartition)
   local a,aneg,i,j,n,pair;
